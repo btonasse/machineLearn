@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.typing as npt
-from typing import Callable, Self, Sequence, Optional
+from typing import Callable, Self, Optional, Any
 import logging
 from utils.logger import log_exceptions
 
@@ -12,26 +12,27 @@ class Layer:
     Initialization args:
         inputlen (int): the number of inputs the layer takes
         neurons (int): the number of nodes of the layer
+        batchsize (int): the size of the input batch
         weightinit (tuple[float, float], optional): The range within which to initialize the layer's weights. Defaults to (-1.0, 1.0).
         biasinit (tuple[float, float], optional): The range within which to initialize the layer's biases. Defaults to (-1.0, 1.0).
     """
 
-    def __init__(self, inputlen: int, neurons: int, weightinit: tuple[float, float] = (-1.0, 1.0), biasinit: tuple[float, float] = (-1.0, 1.0)) -> None:
-        self.input = np.zeros(inputlen)
+    def __init__(self, inputlen: int, neurons: int, batchsize: int, weightinit: tuple[float, float] = (-1.0, 1.0), biasinit: tuple[float, float] = (-1.0, 1.0)) -> None:
+        self.input = np.zeros((batchsize, inputlen))
         self.weights = np.random.uniform(weightinit[0], weightinit[1], size=(neurons, inputlen)).round(1)
         self.biases = np.random.uniform(biasinit[0], biasinit[1], neurons).round(1)
-        self.output = np.zeros(neurons)
+        self.output = np.zeros((batchsize, neurons))
         self.logger = logging.getLogger('neuralnet.'+__name__)
         self.logger.debug(
             f"Layer class initialized: {inputlen} inputs; {neurons} nodes; random weights between {weightinit}; random biases between {biasinit}")
 
     @log_exceptions
-    def feed_input(self, input: Sequence[float] | npt.NDArray[np.float64] | Self) -> npt.NDArray[np.float64]:
+    def feed_input(self, input: npt.NDArray[np.float64] | Self) -> npt.NDArray[np.float64]:
         """
-        Populate the layer's input vector.
+        Populate the layer's input matrix.
 
         Args:
-            input (Sequence[float] | npt.NDArray[np.float64] | Self): A sequence or Layer from which to extract the inputs. If a Layer is provided, the input is extracted from its output.
+            input: A 2d array or Layer from which to extract the inputs. If a Layer is provided, the input is extracted from its output.
 
         Raises:
             TypeError: only sequences or Layer instances are accepted
@@ -43,16 +44,16 @@ class Layer:
         Returns:
             a numpy array with the layer's inputs
         """
-        if isinstance(input, Sequence) or isinstance(input, np.ndarray):
-            input_vector = np.array(input)
+        if isinstance(input, np.ndarray):
+            input_matrix = input
         elif isinstance(input, Layer):
-            input_vector = input.output
+            input_matrix = input.output
         else:
             raise TypeError(f"Wrong input type: {type(input)}")
-        if len(input_vector) != len(self.input):
-            raise ValueError(f"Bad input shape. Expected {len(self.input)}, got {len(input_vector)}")
-        self.input = input_vector
-        self.logger.debug(f"New layer inputs: {input_vector}")
+        if input_matrix.shape != self.input.shape:
+            raise ValueError(f"Bad input shape. Expected {self.input.shape}, got {input_matrix.shape}")
+        self.input = input_matrix
+        self.logger.debug(f"New layer inputs: {input_matrix}")
         return self.input
 
     @log_exceptions
@@ -69,7 +70,7 @@ class Layer:
         Returns:
             the calculation result
         """
-        result = np.dot(self.weights, self.input) + self.biases
+        result = np.dot(self.input, self.weights.T) + self.biases
         if activation_func:
             result = activation_func(result)
         self.output = result
@@ -79,25 +80,26 @@ class Layer:
 
 class NeuralNetwork:
     """
-    Implementation of a neural network consisting of an input vector and an array of Layer instances.
+    Implementation of a neural network consisting of an input matrix and an array of Layer instances.
 
     Args:
         inputs (int): the number of inputs this network takes
+        batchsize (int): the size of the input batch
     """
 
-    def __init__(self, inputs: int) -> None:
-        self.input = np.zeros(inputs)
+    def __init__(self, inputs: int, batchsize: int) -> None:
+        self.input = np.zeros((batchsize, inputs))
         self.layers: list[Layer] = []
         self.logger = logging.getLogger('neuralnet.'+__name__)
-        self.logger.debug(f"NeuralNetwork class initialized: {inputs} inputs")
+        self.logger.debug(f"NeuralNetwork class initialized: {inputs} inputs; {batchsize} batchsize.")
 
     @log_exceptions
-    def feed_input(self, input: Sequence[float] | npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    def feed_input(self, input: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
-        Populate the network's input vector.
+        Populate the network's input matrix.
 
         Args:
-            input (Sequence[float] | npt.NDArray[np.float64]): The sequence to be added to the input vector
+            input: The 2d array to be added to the input matrix
 
         Raises:
             TypeError: only sequences are accepted
@@ -107,16 +109,16 @@ class NeuralNetwork:
             self.input is populated with the method's return value
 
         Returns:
-            a numpy array with the layer's inputs
+            a numpy 2d array with the layer's inputs
         """
-        if not isinstance(input, Sequence) and not isinstance(input, np.ndarray):
-            raise TypeError(f"Expected array-like input, but got {type(input)}")
-        if len(input) != len(self.input):
-            raise ValueError(f"Bad input shape. Expected {len(self.input)}, got {len(input)}")
-        input_vector = np.array(input)
-        self.logger.debug(f"New network inputs: {input_vector}")
-        self.input = input_vector
-        return input_vector
+        if not isinstance(input, np.ndarray):
+            raise TypeError(f"Expected numpy array, but got {type(input)}")
+        if input.shape != self.input.shape:
+            raise ValueError(f"Bad input shape. Expected {self.input.shape}, got {input.shape}")
+        input_matrix = np.array(input)
+        self.logger.debug(f"New network inputs: {input_matrix}")
+        self.input = input_matrix
+        return input_matrix
 
     @log_exceptions
     def add_layer(self, nodes: int, weightinit: tuple[float, float] = (-1.0, 1.0), biasinit: tuple[float, float] = (-1.0, 1.0)) -> Layer:
@@ -135,10 +137,10 @@ class NeuralNetwork:
             the new Layer instance
         """
         if not self.layers:
-            inputs = len(self.input)
+            inputs = self.input.shape[1]
         else:
-            inputs = len(self.layers[-1].output)
-        new_layer = Layer(inputs, nodes, weightinit, biasinit)
+            inputs = self.layers[-1].output.shape[1]
+        new_layer = Layer(inputs, nodes, self.input.shape[0], weightinit, biasinit)
         self.layers.append(new_layer)
         self.logger.debug(f"Added new layer to NeuralNetwork. Current number of layers: {len(self.layers)}")
         return new_layer

@@ -6,6 +6,7 @@ Sets up the root logger, logging DEBUG and above to a file
 
 import logging
 from network import NeuralNetwork
+import numpy as np
 
 logger = logging.getLogger('neuralnet')
 logger.setLevel(logging.DEBUG)
@@ -21,11 +22,11 @@ logger.debug("Logger initialized.")
 def main():
     print('Initializing neuralnet...')
     # Quick test
-    net = NeuralNetwork(3)
+    net = NeuralNetwork(3, 2)
     net.add_layer(4)
     net.add_layer(4)
     net.add_layer(1)
-    net.feed_input([23, -2, 0.45])
+    net.feed_input(np.array([[23.0, -2.0, 0.45], [25.0, 2.0, 12.3]]))
     result = net.forward_pass()
     print(result)
 
