@@ -4,6 +4,16 @@ from typing import Callable, Self, Sequence, Optional
 
 
 class Layer:
+    """
+    Implementation of an individual layer of a neural network
+
+    Initialization args:
+        inputlen (int): the number of inputs the layer takes
+        neurons (int): the number of nodes of the layer
+        weightinit (tuple[float, float], optional): The range within which to initialize the layer's weights. Defaults to (-1.0, 1.0).
+        biasinit (tuple[float, float], optional): The range within which to initialize the layer's biases. Defaults to (-1.0, 1.0).
+    """
+
     def __init__(self, inputlen: int, neurons: int, weightinit: tuple[float, float] = (-1.0, 1.0), biasinit: tuple[float, float] = (-1.0, 1.0)) -> None:
         self.input = np.zeros(inputlen)
         self.weights = np.random.uniform(weightinit[0], weightinit[1], size=(neurons, inputlen)).round(1)
@@ -11,6 +21,22 @@ class Layer:
         self.output = np.zeros(neurons)
 
     def feed_input(self, input: Sequence[float] | npt.NDArray[np.float64] | Self) -> npt.NDArray[np.float64]:
+        """
+        Populate the layer's input vector.
+
+        Args:
+            input (Sequence[float] | npt.NDArray[np.float64] | Self): A sequence or Layer from which to extract the inputs. If a Layer is provided, the input is extracted from its output.
+
+        Raises:
+            TypeError: only sequences or Layer instances are accepted
+            ValueError: the shape of the input parameter must match the shape of the Layer's input attribute
+
+        Side Effects:
+            self.input is populated with the method's return value
+
+        Returns:
+            a numpy array with the layer's inputs
+        """
         if isinstance(input, Sequence) or isinstance(input, np.ndarray):
             input_vector = np.array(input)
         elif isinstance(input, Layer):
@@ -23,6 +49,18 @@ class Layer:
         return self.input
 
     def calculate_output(self, activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None) -> npt.NDArray[np.float64]:
+        """
+        Calculate the layer's output - the sum of the products of inputs and weights + bias, optionally wrapped in an activation function.
+
+        Args:
+            activation_func: If provided, the result is passed to it before the method returns. Defaults to None.
+
+        Side Effects:
+            self.output is populated with the calculation result
+
+        Returns:
+            the calculation result
+        """
         result = np.dot(self.weights, self.input) + self.biases
         if activation_func:
             result = activation_func(result)
@@ -31,11 +69,34 @@ class Layer:
 
 
 class NeuralNetwork:
+    """
+    Implementation of a neural network consisting of an input vector and an array of Layer instances.
+
+    Args:
+        inputs (int): the number of inputs this network takes
+    """
+
     def __init__(self, inputs: int) -> None:
         self.input = np.zeros(inputs)
         self.layers: list[Layer] = []
 
     def feed_input(self, input: Sequence[float] | npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        """
+        Populate the network's input vector.
+
+        Args:
+            input (Sequence[float] | npt.NDArray[np.float64]): The sequence to be added to the input vector
+
+        Raises:
+            TypeError: only sequences are accepted
+            ValueError: the shape of the input parameter must match the shape of the network's input attribute
+
+        Side Effects:
+            self.input is populated with the method's return value
+
+        Returns:
+            a numpy array with the layer's inputs
+        """
         if not isinstance(input, Sequence) and not isinstance(input, np.ndarray):
             raise TypeError(f"Expected array-like input, but got {type(input)}")
         if len(input) != len(self.input):
@@ -45,6 +106,20 @@ class NeuralNetwork:
         return input_vector
 
     def add_layer(self, nodes: int, weightinit: tuple[float, float] = (-1.0, 1.0), biasinit: tuple[float, float] = (-1.0, 1.0)) -> Layer:
+        """
+        Adds a new layer to the network, setting its number of inputs to the number of nodes/outputs of the previous layer.
+
+        Args:
+            nodes (int): the number of nodes of the new layer
+            weightinit (tuple[float, float], optional): The range within which to initialize the layer's weights. Defaults to (-1.0, 1.0).
+            biasinit (tuple[float, float], optional): The range within which to initialize the layer's biases. Defaults to (-1.0, 1.0)
+
+        Side Effects:
+            Appends the new Layer instance to self.layers
+
+        Returns:
+            the new Layer instance
+        """
         if not self.layers:
             inputs = len(self.input)
         else:
@@ -54,6 +129,15 @@ class NeuralNetwork:
         return new_layer
 
     def forward_pass(self, activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None) -> npt.NDArray[np.float64]:
+        """
+        Chain the calculation of each Layer, feeding one Layer's output into the input of the next one, optionally wrapping them into an activation function.
+
+        Args:
+            activation_func: If provided, the result is passed to it before feeding it into the next Layer's input. Defaults to None.
+
+        Returns:
+            the output of the final Layer
+        """
         for i, layer in enumerate(self.layers):
             if i == 0:
                 inputs = self.input
