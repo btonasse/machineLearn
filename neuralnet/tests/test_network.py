@@ -67,8 +67,9 @@ class LayerTest(unittest.TestCase):
         self.layer.feed_input(self.inputs)
         self.layer.weights = np.array([[1, 2, -3], [1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]])
         self.layer.biases = self.fixed_biases
+        self.layer.activation_func = activation.relu
         expected_output = np.array([[0, 16, 15, 15, 15]])
-        output = self.layer.calculate_output(activation.relu)
+        output = self.layer.calculate_output()
         self.assertTrue(np.array_equal(expected_output, output), f"Output:\n{output}")
 
 
@@ -103,5 +104,7 @@ class NeuralNetworkTest(unittest.TestCase):
         self.assertTrue(np.allclose(expected, actual))
 
         expected_relu = np.array([0, 1.986])
-        actual_relu = self.network.forward_pass(activation.relu)
+        for layer in self.network.layers:
+            layer.activation_func = activation.relu
+        actual_relu = self.network.forward_pass()
         self.assertTrue(np.allclose(expected_relu, actual_relu))

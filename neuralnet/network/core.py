@@ -13,15 +13,17 @@ class Layer:
         inputlen (int): the number of inputs the layer takes
         neurons (int): the number of nodes of the layer
         batchsize (int): the size of the input batch
+        activation_func: If provided, the result of the output calculation is passed through it before being returned. Defaults to None.
         weightinit (tuple[float, float], optional): The range within which to initialize the layer's weights. Defaults to (-1.0, 1.0).
         biasinit (tuple[float, float], optional): The range within which to initialize the layer's biases. Defaults to (-1.0, 1.0).
     """
 
-    def __init__(self, inputlen: int, neurons: int, batchsize: int, weightinit: tuple[float, float] = (-1.0, 1.0), biasinit: tuple[float, float] = (-1.0, 1.0)) -> None:
+    def __init__(self, inputlen: int, neurons: int, batchsize: int, activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None, weightinit: tuple[float, float] = (-1.0, 1.0), biasinit: tuple[float, float] = (-1.0, 1.0)) -> None:
         self.input = np.zeros((batchsize, inputlen))
         self.weights = np.random.uniform(weightinit[0], weightinit[1], size=(neurons, inputlen)).round(1)
         self.biases = np.random.uniform(biasinit[0], biasinit[1], neurons).round(1)
         self.output = np.zeros((batchsize, neurons))
+        self.activation_func = activation_func
         self.logger = logging.getLogger('neuralnet.'+__name__)
         self.logger.debug(
             f"Layer class initialized: {inputlen} inputs; {neurons} nodes; random weights between {weightinit}; random biases between {biasinit}")
@@ -57,12 +59,9 @@ class Layer:
         return self.input
 
     @log_exceptions
-    def calculate_output(self, activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None) -> npt.NDArray[np.float64]:
+    def calculate_output(self) -> npt.NDArray[np.float64]:
         """
         Calculate the layer's output - the sum of the products of inputs and weights + bias, optionally wrapped in an activation function.
-
-        Args:
-            activation_func: If provided, the result is passed to it before the method returns. Defaults to None.
 
         Side Effects:
             self.output is populated with the calculation result
@@ -71,8 +70,8 @@ class Layer:
             the calculation result
         """
         result = np.dot(self.input, self.weights.T) + self.biases
-        if activation_func:
-            result = activation_func(result)
+        if self.activation_func:
+            result = self.activation_func(result)
         self.output = result
         self.logger.debug(f"Layer calculation result:\n{result}")
         return result
@@ -121,12 +120,13 @@ class NeuralNetwork:
         return input_matrix
 
     @log_exceptions
-    def add_layer(self, nodes: int, weightinit: tuple[float, float] = (-1.0, 1.0), biasinit: tuple[float, float] = (-1.0, 1.0)) -> Layer:
+    def add_layer(self, nodes: int, activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None, weightinit: tuple[float, float] = (-1.0, 1.0), biasinit: tuple[float, float] = (-1.0, 1.0)) -> Layer:
         """
         Adds a new layer to the network, setting its number of inputs to the number of nodes/outputs of the previous layer.
 
         Args:
             nodes (int): the number of nodes of the new layer
+            activation_func: if provided, the result is passed to it before feeding it into the next Layer's input. Defaults to None.
             weightinit (tuple[float, float], optional): The range within which to initialize the layer's weights. Defaults to (-1.0, 1.0).
             biasinit (tuple[float, float], optional): The range within which to initialize the layer's biases. Defaults to (-1.0, 1.0)
 
@@ -140,19 +140,15 @@ class NeuralNetwork:
             inputs = self.input.shape[1]
         else:
             inputs = self.layers[-1].output.shape[1]
-        new_layer = Layer(inputs, nodes, self.input.shape[0], weightinit, biasinit)
+        new_layer = Layer(inputs, nodes, self.input.shape[0], activation_func, weightinit, biasinit)
         self.layers.append(new_layer)
         self.logger.debug(f"Added new layer to NeuralNetwork. Current number of layers: {len(self.layers)}")
         return new_layer
 
     @log_exceptions
-    def forward_pass(self, activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None) -> npt.NDArray[np.float64]:
+    def forward_pass(self) -> npt.NDArray[np.float64]:
         """
-        Chain the calculation of each Layer, feeding one Layer's output into the input of the next one, optionally wrapping them into an activation function.
-
-        Args:
-            activation_func: If provided, the result is passed to it before feeding it into the next Layer's input. Defaults to None.
-
+        Chain the calculation of each Layer, feeding one Layer's output into the input of the next one.
         Returns:
             the output of the final Layer
         """
@@ -162,7 +158,7 @@ class NeuralNetwork:
             else:
                 inputs = self.layers[i-1].output
             layer.feed_input(inputs)
-            layer.calculate_output(activation_func)
+            layer.calculate_output()
         output = self.layers[-1].output
         self.logger.debug(f"Forward pass completed. Output:\n{output}")
         return output
