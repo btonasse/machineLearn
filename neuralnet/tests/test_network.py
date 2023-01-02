@@ -2,6 +2,10 @@ import unittest
 import numpy as np
 from network import NeuralNetwork, Layer
 from network import activation
+import logging
+
+logger = logging.getLogger()
+logger.addHandler(logging.NullHandler(logging.DEBUG))
 
 
 class LayerTest(unittest.TestCase):

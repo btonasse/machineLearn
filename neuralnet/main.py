@@ -7,7 +7,7 @@ Sets up the root logger, logging DEBUG and above to a file
 import logging
 from network import NeuralNetwork
 
-logger = logging.getLogger()
+logger = logging.getLogger('neuralnet')
 logger.setLevel(logging.DEBUG)
 
 file_handler = logging.FileHandler('logs.log', mode='w')
@@ -15,6 +15,7 @@ file_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(mess
 file_handler.setFormatter(file_format)
 file_handler.setLevel(logging.DEBUG)
 logger.addHandler(file_handler)
+logger.debug("Logger initialized.")
 
 """console_handler = logging.StreamHandler()
 console_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')

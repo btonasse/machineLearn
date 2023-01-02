@@ -21,7 +21,7 @@ class Layer:
         self.weights = np.random.uniform(weightinit[0], weightinit[1], size=(neurons, inputlen)).round(1)
         self.biases = np.random.uniform(biasinit[0], biasinit[1], neurons).round(1)
         self.output = np.zeros(neurons)
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger('neuralnet.'+__name__)
         self.logger.debug(
             f"Layer class initialized: {inputlen} inputs; {neurons} nodes; random weights between {weightinit}; random biases between {biasinit}")
 
@@ -88,7 +88,7 @@ class NeuralNetwork:
     def __init__(self, inputs: int) -> None:
         self.input = np.zeros(inputs)
         self.layers: list[Layer] = []
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger('neuralnet.'+__name__)
         self.logger.debug(f"NeuralNetwork class initialized: {inputs} inputs")
 
     @log_exceptions
