@@ -1,6 +1,8 @@
 import numpy as np
 import numpy.typing as npt
 from typing import Callable, Self, Sequence, Optional
+import logging
+from utils.logger import log_exceptions
 
 
 class Layer:
@@ -19,7 +21,11 @@ class Layer:
         self.weights = np.random.uniform(weightinit[0], weightinit[1], size=(neurons, inputlen)).round(1)
         self.biases = np.random.uniform(biasinit[0], biasinit[1], neurons).round(1)
         self.output = np.zeros(neurons)
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug(
+            f"Layer class initialized: {inputlen} inputs; {neurons} nodes; random weights between {weightinit}; random biases between {biasinit}")
 
+    @log_exceptions
     def feed_input(self, input: Sequence[float] | npt.NDArray[np.float64] | Self) -> npt.NDArray[np.float64]:
         """
         Populate the layer's input vector.
@@ -46,8 +52,10 @@ class Layer:
         if len(input_vector) != len(self.input):
             raise ValueError(f"Bad input shape. Expected {len(self.input)}, got {len(input_vector)}")
         self.input = input_vector
+        self.logger.debug(f"New layer inputs: {input_vector}")
         return self.input
 
+    @log_exceptions
     def calculate_output(self, activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None) -> npt.NDArray[np.float64]:
         """
         Calculate the layer's output - the sum of the products of inputs and weights + bias, optionally wrapped in an activation function.
@@ -65,6 +73,7 @@ class Layer:
         if activation_func:
             result = activation_func(result)
         self.output = result
+        self.logger.debug(f"Layer calculation result: {result}")
         return result
 
 
@@ -79,7 +88,10 @@ class NeuralNetwork:
     def __init__(self, inputs: int) -> None:
         self.input = np.zeros(inputs)
         self.layers: list[Layer] = []
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug(f"NeuralNetwork class initialized: {inputs} inputs")
 
+    @log_exceptions
     def feed_input(self, input: Sequence[float] | npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
         Populate the network's input vector.
@@ -102,9 +114,11 @@ class NeuralNetwork:
         if len(input) != len(self.input):
             raise ValueError(f"Bad input shape. Expected {len(self.input)}, got {len(input)}")
         input_vector = np.array(input)
+        self.logger.debug(f"New network inputs: {input_vector}")
         self.input = input_vector
         return input_vector
 
+    @log_exceptions
     def add_layer(self, nodes: int, weightinit: tuple[float, float] = (-1.0, 1.0), biasinit: tuple[float, float] = (-1.0, 1.0)) -> Layer:
         """
         Adds a new layer to the network, setting its number of inputs to the number of nodes/outputs of the previous layer.
@@ -126,8 +140,10 @@ class NeuralNetwork:
             inputs = len(self.layers[-1].output)
         new_layer = Layer(inputs, nodes, weightinit, biasinit)
         self.layers.append(new_layer)
+        self.logger.debug(f"Added new layer to NeuralNetwork. Current number of layers: {len(self.layers)}")
         return new_layer
 
+    @log_exceptions
     def forward_pass(self, activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None) -> npt.NDArray[np.float64]:
         """
         Chain the calculation of each Layer, feeding one Layer's output into the input of the next one, optionally wrapping them into an activation function.
@@ -145,4 +161,6 @@ class NeuralNetwork:
                 inputs = self.layers[i-1].output
             layer.feed_input(inputs)
             layer.calculate_output(activation_func)
-        return self.layers[-1].output
+        output = self.layers[-1].output
+        self.logger.debug(f"Forward pass completed. Output: {output}")
+        return output
