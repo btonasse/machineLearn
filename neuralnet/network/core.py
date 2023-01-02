@@ -53,7 +53,7 @@ class Layer:
         if input_matrix.shape != self.input.shape:
             raise ValueError(f"Bad input shape. Expected {self.input.shape}, got {input_matrix.shape}")
         self.input = input_matrix
-        self.logger.debug(f"New layer inputs: {input_matrix}")
+        self.logger.debug(f"New layer inputs:\n{input_matrix}")
         return self.input
 
     @log_exceptions
@@ -74,7 +74,7 @@ class Layer:
         if activation_func:
             result = activation_func(result)
         self.output = result
-        self.logger.debug(f"Layer calculation result: {result}")
+        self.logger.debug(f"Layer calculation result:\n{result}")
         return result
 
 
@@ -116,7 +116,7 @@ class NeuralNetwork:
         if input.shape != self.input.shape:
             raise ValueError(f"Bad input shape. Expected {self.input.shape}, got {input.shape}")
         input_matrix = np.array(input)
-        self.logger.debug(f"New network inputs: {input_matrix}")
+        self.logger.debug(f"New network inputs:\n{input_matrix}")
         self.input = input_matrix
         return input_matrix
 
@@ -164,5 +164,5 @@ class NeuralNetwork:
             layer.feed_input(inputs)
             layer.calculate_output(activation_func)
         output = self.layers[-1].output
-        self.logger.debug(f"Forward pass completed. Output: {output}")
+        self.logger.debug(f"Forward pass completed. Output:\n{output}")
         return output
