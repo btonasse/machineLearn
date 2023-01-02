@@ -17,12 +17,6 @@ file_handler.setLevel(logging.DEBUG)
 logger.addHandler(file_handler)
 logger.debug("Logger initialized.")
 
-"""console_handler = logging.StreamHandler()
-console_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(console_format)
-console_handler.setLevel(logging.WARN)
-logger.addHandler(console_handler)"""
-
 
 def main():
     print('Initializing neuralnet...')
