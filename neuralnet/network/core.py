@@ -18,15 +18,24 @@ class Layer:
         biasinit (tuple[float, float], optional): The range within which to initialize the layer's biases. Defaults to (-1.0, 1.0).
     """
 
-    def __init__(self, inputlen: int, neurons: int, batchsize: int, activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None, weightinit: tuple[float, float] = (-1.0, 1.0), biasinit: tuple[float, float] = (-1.0, 1.0)) -> None:
+    def __init__(
+        self,
+        inputlen: int,
+        neurons: int,
+        batchsize: int,
+        activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None,
+        weightinit: tuple[float, float] = (-1.0, 1.0),
+        biasinit: tuple[float, float] = (-1.0, 1.0),
+    ) -> None:
         self.input = np.zeros((batchsize, inputlen))
         self.weights = np.random.uniform(weightinit[0], weightinit[1], size=(neurons, inputlen)).round(1)
         self.biases = np.random.uniform(biasinit[0], biasinit[1], neurons).round(1)
         self.output = np.zeros((batchsize, neurons))
         self.activation_func = activation_func
-        self.logger = logging.getLogger('neuralnet.'+__name__)
+        self.logger = logging.getLogger("neuralnet." + __name__)
         self.logger.debug(
-            f"Layer class initialized: {inputlen} inputs; {neurons} nodes; random weights between {weightinit}; random biases between {biasinit}")
+            f"Layer class initialized: {inputlen} inputs; {neurons} nodes; random weights between {weightinit}; random biases between {biasinit}"
+        )
 
     @log_exceptions
     def feed_input(self, input: npt.NDArray[np.float64] | Self) -> npt.NDArray[np.float64]:
@@ -89,7 +98,7 @@ class NeuralNetwork:
     def __init__(self, inputs: int, batchsize: int) -> None:
         self.input = np.zeros((batchsize, inputs))
         self.layers: list[Layer] = []
-        self.logger = logging.getLogger('neuralnet.'+__name__)
+        self.logger = logging.getLogger("neuralnet." + __name__)
         self.logger.debug(f"NeuralNetwork class initialized: {inputs} inputs; {batchsize} batchsize.")
 
     @log_exceptions
@@ -120,7 +129,13 @@ class NeuralNetwork:
         return input_matrix
 
     @log_exceptions
-    def add_layer(self, nodes: int, activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None, weightinit: tuple[float, float] = (-1.0, 1.0), biasinit: tuple[float, float] = (-1.0, 1.0)) -> Layer:
+    def add_layer(
+        self,
+        nodes: int,
+        activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None,
+        weightinit: tuple[float, float] = (-1.0, 1.0),
+        biasinit: tuple[float, float] = (-1.0, 1.0),
+    ) -> Layer:
         """
         Adds a new layer to the network, setting its number of inputs to the number of nodes/outputs of the previous layer.
 
@@ -156,7 +171,7 @@ class NeuralNetwork:
             if i == 0:
                 inputs = self.input
             else:
-                inputs = self.layers[i-1].output
+                inputs = self.layers[i - 1].output
             layer.feed_input(inputs)
             layer.calculate_output()
         output = self.layers[-1].output

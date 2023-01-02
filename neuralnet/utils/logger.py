@@ -13,6 +13,7 @@ def log_exceptions(func: Callable):
     Args:
         func (callable): the function to decorate
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -20,4 +21,5 @@ def log_exceptions(func: Callable):
         except Exception as e:
             args[0].logger.exception(e)
             raise
+
     return wrapper

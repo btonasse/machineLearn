@@ -22,14 +22,9 @@ class LayerTest(unittest.TestCase):
 
     def test_layer_initialization(self):
         """Random initialization of weights and biases"""
-        expected_weights = [
-            [0.1,  0.4,  0.2],
-            [0.1, -0.2,  0.3],
-            [-0.1,  0.8,  0.9],
-            [-0.2,  0.6,  0.1],
-            [0.1,  0.9, -0.9]]
+        expected_weights = [[0.1, 0.4, 0.2], [0.1, -0.2, 0.3], [-0.1, 0.8, 0.9], [-0.2, 0.6, 0.1], [0.1, 0.9, -0.9]]
 
-        expected_biases = [-0.8, -1.0,  0.7,  0.6,  0.7]
+        expected_biases = [-0.8, -1.0, 0.7, 0.6, 0.7]
 
         self.assertTrue(np.allclose(self.layer.weights, expected_weights))
         self.assertTrue(np.allclose(self.layer.biases, expected_biases))

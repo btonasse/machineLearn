@@ -8,11 +8,11 @@ import logging
 from network import NeuralNetwork
 import numpy as np
 
-logger = logging.getLogger('neuralnet')
+logger = logging.getLogger("neuralnet")
 logger.setLevel(logging.DEBUG)
 
-file_handler = logging.FileHandler('logs.log', mode='w')
-file_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler = logging.FileHandler("logs.log", mode="w")
+file_format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 file_handler.setFormatter(file_format)
 file_handler.setLevel(logging.DEBUG)
 logger.addHandler(file_handler)
@@ -20,7 +20,7 @@ logger.debug("Logger initialized.")
 
 
 def main():
-    print('Initializing neuralnet...')
+    print("Initializing neuralnet...")
     # Quick test
     net = NeuralNetwork(3, 2)
     net.add_layer(4)
@@ -31,5 +31,5 @@ def main():
     print(result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
