@@ -14,8 +14,8 @@ class Layer:
         neurons (int): the number of nodes of the layer
         batchsize (int): the size of the input batch
         activation_func: If provided, the result of the output calculation is passed through it before being returned. Defaults to None.
-        weightinit (tuple[float, float], optional): The range within which to initialize the layer's weights. Defaults to (-1.0, 1.0).
-        biasinit (tuple[float, float], optional): The range within which to initialize the layer's biases. Defaults to (-1.0, 1.0).
+        weightinit (tuple[float, float], optional): The mean and standard deviation used to initialize the layer's weights. Defaults to (0.0, 1.0).
+        biasinit (tuple[float, float], optional): The mean and standard deviation used to initialize the layer's biases. Defaults to (0.0, 0.0).
     """
 
     def __init__(
@@ -24,18 +24,17 @@ class Layer:
         neurons: int,
         batchsize: int,
         activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None,
-        weightinit: tuple[float, float] = (-1.0, 1.0),
-        biasinit: tuple[float, float] = (-1.0, 1.0),
+        weightinit: tuple[float, float] = (0.0, 1.0),
+        biasinit: tuple[float, float] = (0.0, 0.0),
     ) -> None:
+
         self.input = np.zeros((batchsize, inputlen))
-        self.weights = np.random.uniform(weightinit[0], weightinit[1], size=(neurons, inputlen)).round(1)
-        self.biases = np.random.uniform(biasinit[0], biasinit[1], neurons).round(1)
+        self.weights = (np.random.normal(weightinit[0], weightinit[1], (inputlen, neurons)) * 0.1).round(3)  # Create already an transposed weight matrix
+        self.biases = (np.random.normal(biasinit[0], biasinit[1], neurons) * 0.1).round(3)
         self.output = np.zeros((batchsize, neurons))
         self.activation_func = activation_func
         self.logger = logging.getLogger("neuralnet." + __name__)
-        self.logger.debug(
-            f"Layer class initialized: {inputlen} inputs; {neurons} nodes; random weights between {weightinit}; random biases between {biasinit}"
-        )
+        self.logger.debug(f"Layer class initialized: {inputlen} inputs; {neurons} nodes; random weights between {weightinit}; random biases between {biasinit}")
 
     @log_exceptions
     def feed_input(self, input: npt.NDArray[np.float64] | Self) -> npt.NDArray[np.float64]:
@@ -78,7 +77,7 @@ class Layer:
         Returns:
             the calculation result
         """
-        result = np.dot(self.input, self.weights.T) + self.biases
+        result = np.dot(self.input, self.weights) + self.biases
         if self.activation_func:
             result = self.activation_func(result)
         self.output = result
@@ -133,8 +132,8 @@ class NeuralNetwork:
         self,
         nodes: int,
         activation_func: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None,
-        weightinit: tuple[float, float] = (-1.0, 1.0),
-        biasinit: tuple[float, float] = (-1.0, 1.0),
+        weightinit: tuple[float, float] = (0.0, 1.0),
+        biasinit: tuple[float, float] = (0.0, 0.0),
     ) -> Layer:
         """
         Adds a new layer to the network, setting its number of inputs to the number of nodes/outputs of the previous layer.
@@ -142,8 +141,8 @@ class NeuralNetwork:
         Args:
             nodes (int): the number of nodes of the new layer
             activation_func: if provided, the result is passed to it before feeding it into the next Layer's input. Defaults to None.
-            weightinit (tuple[float, float], optional): The range within which to initialize the layer's weights. Defaults to (-1.0, 1.0).
-            biasinit (tuple[float, float], optional): The range within which to initialize the layer's biases. Defaults to (-1.0, 1.0)
+            weightinit (tuple[float, float], optional): The mean and standard deviation used to initialize the layer's weights. Defaults to (0.0, 1.0).
+        biasinit (tuple[float, float], optional): The mean and standard deviation used to initialize the layer's biases. Defaults to (0.0, 0.0).
 
         Side Effects:
             Appends the new Layer instance to self.layers

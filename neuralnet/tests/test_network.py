@@ -15,19 +15,19 @@ class LayerTest(unittest.TestCase):
 
     def setUp(self) -> None:
         np.random.seed(0)
-        self.layer = Layer(3, 5, 1)
+        self.layer = Layer(3, 5, 1, biasinit=(0.0, 1.0))
         self.inputs = np.array([[1.0, 2.0, 3.0]])
-        self.fixed_weights = np.array([[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]])
+        self.fixed_weights = np.array([[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]]).T
         self.fixed_biases = np.array([1, 2, 1, 1, 1])
 
     def test_layer_initialization(self):
         """Random initialization of weights and biases"""
-        expected_weights = [[0.1, 0.4, 0.2], [0.1, -0.2, 0.3], [-0.1, 0.8, 0.9], [-0.2, 0.6, 0.1], [0.1, 0.9, -0.9]]
+        expected_weights = np.array([[0.176, 0.04, 0.098, 0.224, 0.187], [-0.098, 0.095, -0.015, -0.01, 0.041], [0.014, 0.145, 0.076, 0.012, 0.044]])
 
-        expected_biases = [-0.8, -1.0, 0.7, 0.6, 0.7]
+        expected_biases = np.array([0.033, 0.149, -0.021, 0.031, -0.085])
 
-        self.assertTrue(np.allclose(self.layer.weights, expected_weights))
-        self.assertTrue(np.allclose(self.layer.biases, expected_biases))
+        self.assertTrue(np.allclose(self.layer.weights, expected_weights), f"Generated weights:\n{self.layer.weights}")
+        self.assertTrue(np.allclose(self.layer.biases, expected_biases), f"Generated biases:\n{self.layer.biases}")
 
     def test_feed_input(self):
         """Feeding different types of input to a layer"""
@@ -60,7 +60,7 @@ class LayerTest(unittest.TestCase):
     def test_relu(self):
         """Layer output calculation with relu"""
         self.layer.feed_input(self.inputs)
-        self.layer.weights = np.array([[1, 2, -3], [1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]])
+        self.layer.weights = np.array([[1, 2, -3], [1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]]).T
         self.layer.biases = self.fixed_biases
         self.layer.activation_func = activation.relu
         expected_output = np.array([[0, 16, 15, 15, 15]])
@@ -94,12 +94,12 @@ class NeuralNetworkTest(unittest.TestCase):
         self.network.add_layer(5)
         self.network.add_layer(5)
         self.network.add_layer(2)
-        expected = np.array([[0.1856, 0.7844]])
+        expected = np.array([[0.00834035, -0.005476]])
         actual = self.network.forward_pass()
-        self.assertTrue(np.allclose(expected, actual))
+        self.assertTrue(np.allclose(expected, actual), f"Output: {actual}")
 
-        expected_relu = np.array([0, 1.986])
+        expected_relu = np.array([0.00068312, 0.0])
         for layer in self.network.layers:
             layer.activation_func = activation.relu
         actual_relu = self.network.forward_pass()
-        self.assertTrue(np.allclose(expected_relu, actual_relu))
+        self.assertTrue(np.allclose(expected_relu, actual_relu), f"Output: {actual_relu}")
