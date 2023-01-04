@@ -8,6 +8,21 @@ logger = logging.getLogger()
 logger.addHandler(logging.NullHandler(logging.DEBUG))
 
 
+class TestActivation(unittest.TestCase):
+    def setUp(self) -> None:
+        self.output = np.array([[-1, 2, 3], [1, 2, 3]])
+
+    def test_relu(self):
+        expected = np.array([[0.0, 2.0, 3.0], [1.0, 2.0, 3.0]])
+        actual = activation.relu(self.output)
+        self.assertTrue(np.array_equal(expected, actual), f"Actual output: {actual}")
+
+    def test_softmax(self):
+        expected = np.array([[0.0132129, 0.265388, 0.721399], [0.0900306, 0.244728, 0.665241]])
+        actual = activation.softmax(self.output)
+        self.assertTrue(np.allclose(expected, actual), f"Actual output: {actual}")
+
+
 class LayerTest(unittest.TestCase):
     """
     Test Layer class initialization and API

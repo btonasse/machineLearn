@@ -15,3 +15,11 @@ def relu(batch: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
 
 def sigmoid(batch: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     raise NotImplementedError
+
+
+def softmax(batch: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    """
+    Exponentiate and then normalize a batch of outputs.
+    """
+    exponentiated = np.exp(batch - np.max(batch, axis=1, keepdims=True))
+    return exponentiated / np.sum(exponentiated, axis=1, keepdims=True)
